@@ -1,17 +1,5 @@
 {
-  "name": "fake-fitober-backend",
-  "version": "0.1.0",
-  "description": "Webhook to collect Fitober logs (Node + Express + SQLite)",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
-    "helmet": "^6.0.1",
-    "sqlite3": "^5.1.6"
-  }
+  "name": "removed-server-sample",
+  "version": "0.0.0",
+  "description": "Placeholder - server example removed during cleanup"
 }

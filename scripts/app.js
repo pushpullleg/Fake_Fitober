@@ -34,62 +34,7 @@ function buildPrefillURL(profile, activity, duration) {
 }
 
 function saveRecentLog(log) {
-  let logs = JSON.parse(localStorage.getItem('fitober_logs') || '[]');
-  logs.unshift(log);
-  logs = logs.slice(0, 7);
-  localStorage.setItem('fitober_logs', JSON.stringify(logs));
-  renderRecentLogs();
-  updateLeaderboard();
-}
-
-function renderRecentLogs() {
-  const logs = JSON.parse(localStorage.getItem('fitober_logs') || '[]');
-  let ul = document.getElementById('recentLog');
-  if (!ul) {
-    // create the section
-    const container = document.createElement('div');
-    container.className = 'info';
-    container.style.marginTop = '20px';
-    container.innerHTML = '<strong>Recent logs</strong><ul id="recentLog" style="margin-top:8px"></ul>';
-    const footer = document.querySelector('.footer-credit');
-    footer.parentNode.insertBefore(container, footer);
-    ul = document.getElementById('recentLog');
-  }
-  ul.innerHTML = '';
-  logs.forEach(l => {
-    const li = document.createElement('li');
-    li.textContent = `${l.date} | ${l.member} | ${l.activity} (${l.duration} min)`;
-    ul.appendChild(li);
-  });
-}
-
-function updateLeaderboard() {
-  const logs = JSON.parse(localStorage.getItem('fitober_logs') || '[]');
-  const totals = {};
-  members.forEach(m => { totals[m.name] = 0; });
-  logs.forEach(l => {
-    if (totals[l.member] !== undefined) {
-      totals[l.member] += parseInt(l.duration) || 0;
-    }
-  });
-  const sorted = Object.entries(totals).sort((a,b) => b[1] - a[1]);
-
-  let lb = document.getElementById('leaderboardList');
-  if (!lb) {
-    const container = document.createElement('div');
-    container.className = 'info';
-    container.style.marginTop = '12px';
-    container.innerHTML = '<strong>Leaderboard</strong><ul id="leaderboardList" style="margin-top:8px"></ul>';
-    const footer = document.querySelector('.footer-credit');
-    footer.parentNode.insertBefore(container, footer);
-    lb = document.getElementById('leaderboardList');
-  }
-  lb.innerHTML = '';
-  sorted.forEach(([name, min]) => {
-    const li = document.createElement('li');
-    li.textContent = `${name}: ${min} min`;
-    lb.appendChild(li);
-  });
+  // intentionally disabled: recent logs are not used anymore
 }
 
 // wire up the existing DOM when ready
@@ -135,21 +80,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   memberSelect.addEventListener('change', (e) => updateProfile(e.target.value));
 
-  // Mirror clicks on duration buttons (only the set generated in index.html)
-  document.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('.duration-btn');
-    if (!btn) return;
-    // toggle selected styling
-    document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    const d = btn.dataset.duration || btn.textContent.replace(/[^0-9]/g,'');
-    if (d) {
-      window._selectedDuration = String(d);
-      // reflect selection into manual input so user can edit it
-      const manual = document.getElementById('manualDuration');
-      if (manual) manual.value = String(d);
-    }
-  });
+  // Delegate clicks on the duration-buttons container so button clicks reliably update manual input
+  const durationContainer = document.querySelector('.duration-buttons');
+  if (durationContainer) {
+    durationContainer.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('.duration-btn');
+      if (!btn) return;
+      // toggle selected styling
+      document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const d = btn.dataset.duration || btn.textContent.replace(/[^0-9]/g,'');
+      if (d) {
+        window._selectedDuration = String(d);
+        // reflect into manual input so user can edit
+        const manual = document.getElementById('manualDuration');
+        if (manual) manual.value = String(d);
+        // also sync slider
+        const s = document.getElementById('durationSlider');
+        if (s) s.value = String(d);
+        const err = document.getElementById('durationError');
+        if (err) err.style.display = 'none';
+      }
+    });
+  }
 
   // If manual input exists, mirror its changes into window._selectedDuration
   const manualInput = document.getElementById('manualDuration');
@@ -160,6 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // clear any selected duration button
         document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
         window._selectedDuration = v;
+        // sync slider
+        const s = document.getElementById('durationSlider');
+        if (s) s.value = v;
       } else {
         window._selectedDuration = '';
       }
@@ -169,11 +125,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Wire the existing submit button to post to webhook then open the prefilled form
-  const submitBtn = document.getElementById('submitBtn');
-  const copyBtn = document.getElementById('copyBtn');
-  if (submitBtn) {
-    submitBtn.addEventListener('click', () => {
+  // Slider behavior
+  const slider = document.getElementById('durationSlider');
+  if (slider) {
+    // initialize selectedDuration from slider value
+    window._selectedDuration = String(slider.value);
+    const manual = document.getElementById('manualDuration');
+    if (manual) manual.value = String(slider.value);
+    slider.addEventListener('input', (e) => {
+      const v = String(e.target.value);
+      window._selectedDuration = v;
+      // reflect into manual input and clear button highlights
+      const m = document.getElementById('manualDuration');
+      if (m) m.value = v;
+      document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+      const err = document.getElementById('durationError');
+      if (err) err.style.display = 'none';
+    });
+  }
+
+  // Repurpose the copyBtn as the single action button: validate, post to webhook, then open form
+  const actionBtn = document.getElementById('copyBtn');
+  if (actionBtn) {
+    actionBtn.addEventListener('click', () => {
       const sel = document.getElementById('member');
       const idx = sel.value;
       if (idx === '' || idx === undefined) {
@@ -198,24 +172,28 @@ document.addEventListener('DOMContentLoaded', () => {
           console.warn('Webhook error', err);
         })
         .finally(() => {
-          const date = new Date().toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'2-digit' });
-          saveRecentLog({ date, member: profile.name, activity, duration });
           const url = buildPrefillURL(profile, activity, duration);
-          window.open(url, '_blank');
+          // show toast and then open the form
+          showToast('Opening form...');
+          setTimeout(() => window.open(url, '_blank'), 300);
         });
     });
   }
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      // reuse buildURL and copy function already defined in page script
-      const url = `${WEBHOOK}/?preview=1`;
-      navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(url) : null;
-    });
-  }
+// Toast helper
+function showToast(msg, ms = 2000) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.display = 'block';
+  // trigger show class
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => { t.style.display = 'none'; }, 250);
+  }, ms);
+}
 
   // initial state
   memberSelect.value = '';
-  renderRecentLogs();
-  updateLeaderboard();
 });
