@@ -145,8 +145,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = btn.dataset.duration || btn.textContent.replace(/[^0-9]/g,'');
     if (d) {
       window._selectedDuration = String(d);
+      // clear manual input if present
+      const manual = document.getElementById('manualDuration');
+      if (manual) manual.value = '';
     }
   });
+
+  // If manual input exists, mirror its changes into window._selectedDuration
+  const manualInput = document.getElementById('manualDuration');
+  if (manualInput) {
+    manualInput.addEventListener('input', (e) => {
+      const v = e.target.value && Number(e.target.value) > 0 ? String(Number(e.target.value)) : '';
+      if (v) {
+        // clear any selected duration button
+        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+        window._selectedDuration = v;
+      } else {
+        window._selectedDuration = '';
+      }
+    });
+    manualInput.addEventListener('keydown', (ev) => {
+      if (ev.key === 'e' || ev.key === 'E' || ev.key === '+' || ev.key === '-') ev.preventDefault();
+    });
+  }
 
   // Wire the existing submit button to post to webhook then open the prefilled form
   const submitBtn = document.getElementById('submitBtn');
