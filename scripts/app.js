@@ -145,9 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = btn.dataset.duration || btn.textContent.replace(/[^0-9]/g,'');
     if (d) {
       window._selectedDuration = String(d);
-      // clear manual input if present
+      // reflect selection into manual input so user can edit it
       const manual = document.getElementById('manualDuration');
-      if (manual) manual.value = '';
+      if (manual) manual.value = String(d);
     }
   });
 

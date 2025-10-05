@@ -372,6 +372,9 @@
                 document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedDuration = btn.dataset.duration;
+                // reflect selection into manual input so user can edit it
+                const manual = document.getElementById('manualDuration');
+                if (manual) manual.value = selectedDuration;
                 document.getElementById('durationError').style.display = 'none';
             });
 
