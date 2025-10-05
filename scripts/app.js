@@ -9,8 +9,12 @@ const members = [
 ];
 const teamName = "The Excel-erators";
 
-// Google Form field entry IDs (use the full 'entry.123' form)
-const entryIDs = {
+// NOTE: entry IDs and form base URL are consolidated in `index.html`'s FORM_CONFIG.
+// This file will attempt to read mapping from that object; if it's not present,
+// fallback to a minimal, hard-coded mapping (so development doesn't immediately fail).
+
+// Minimal fallback mapping (development only)
+const fallbackEntryIDs = {
   team: 'entry.500000070',
   member: 'entry.721958901',
   cwid: 'entry.1522950107',
@@ -18,19 +22,39 @@ const entryIDs = {
   duration: 'entry.737958173'
 };
 
+function normalizeEntryIdLocal(id) {
+  if (!id) return null;
+  id = String(id).trim();
+  if (!id) return null;
+  if (id.startsWith('entry.')) return id;
+  return 'entry.' + id;
+}
+
 // CONFIG: set your webhook endpoint and API key here (or keep defaults for local dev)
 const WEBHOOK = window.WEBHOOK_ENDPOINT || 'http://localhost:3000/api/log';
 const WEBHOOK_API_KEY = window.WEBHOOK_API_KEY || 'dev-key';
 
 // Helper: build prefilled form URL
 function buildPrefillURL(profile, activity, duration) {
-  const params = new URLSearchParams();
-  params.append(entryIDs.team, teamName);
-  params.append(entryIDs.member, profile.name);
-  params.append(entryIDs.cwid, profile.cwid);
-  params.append(entryIDs.activity, activity);
-  params.append(entryIDs.duration, duration);
-  return `https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform?pli=1&${params.toString()}`;
+  // Prefer FORM_CONFIG.entries defined in index.html. If not available, fall back.
+  const cfgEntries = (typeof FORM_CONFIG !== 'undefined' && FORM_CONFIG.entries) ? FORM_CONFIG.entries : fallbackEntryIDs;
+  const formBase = (typeof FORM_CONFIG !== 'undefined' && FORM_CONFIG.formBaseURL) ? FORM_CONFIG.formBaseURL : 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform';
+
+  const entries = {};
+  const teamKey = normalizeEntryIdLocal(cfgEntries.team || cfgEntries.teamName || cfgEntries.team_name);
+  const memberKey = normalizeEntryIdLocal(cfgEntries.member || cfgEntries.name);
+  const cwidKey = normalizeEntryIdLocal(cfgEntries.cwid);
+  const activityKey = normalizeEntryIdLocal(cfgEntries.activity);
+  const durationKey = normalizeEntryIdLocal(cfgEntries.duration);
+
+  if (teamKey) entries[teamKey] = teamName;
+  if (memberKey) entries[memberKey] = profile.name;
+  if (cwidKey) entries[cwidKey] = profile.cwid;
+  if (activityKey) entries[activityKey] = activity;
+  if (durationKey) entries[durationKey] = duration;
+
+  const params = new URLSearchParams(entries);
+  return params.toString() ? `${formBase}?${params.toString()}` : formBase;
 }
 
 function saveRecentLog(log) {
