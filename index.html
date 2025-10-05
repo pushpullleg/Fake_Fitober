@@ -233,6 +233,7 @@
     <div class="container">
         <h1>FITTOBER 2025</h1>
         <div class="team-name">The Excel-erators</div>
+    <div id="configNotice" class="config-notice" style="display:none; margin-top:12px; padding:10px; border-radius:8px; background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-size:14px;">This page is not fully configured. Update the <code>FORM_CONFIG</code> block in <code>index.html</code> with your Google Form's <code>formBaseURL</code> and the correct field entry IDs (replace the <code>REPLACE_ME</code> values). The "Log & Open" button is disabled until configuration is completed.</div>
         
         <div class="form-group">
             <label for="member">Select Team Member *</label>
@@ -351,10 +352,13 @@
         function checkConfig() {
             const placeholders = Object.values(FORM_CONFIG.entries).some(v => !v || /REPLACE_ME/i.test(String(v)));
             const notice = document.getElementById('configNotice');
+            const action = document.getElementById('copyBtn');
             if (placeholders) {
-                notice.style.display = 'block';
+                if (notice) notice.style.display = 'block';
+                if (action) { action.disabled = true; action.title = 'Page not configured; update FORM_CONFIG in index.html'; }
             } else {
-                notice.style.display = 'none';
+                if (notice) notice.style.display = 'none';
+                if (action) { action.disabled = false; action.title = ''; }
             }
         }
 
