@@ -1,3 +1,144 @@
+// Minimal client script: build a Google Form prefill URL from FORM_CONFIG
+// and open it. No webhooks, no logging — intentionally tiny for GitHub Pages.
+
+(function () {
+  'use strict';
+
+  // safe helpers
+  function normalizeEntryId(id) {
+    if (!id) return null;
+    id = String(id).trim();
+    if (!id) return null;
+    return id.startsWith('entry.') ? id : 'entry.' + id;
+  }
+
+  function getConfig() {
+    if (typeof FORM_CONFIG !== 'undefined' && FORM_CONFIG) return FORM_CONFIG;
+    return null;
+  }
+
+  function buildURLFromConfig(name, cwid, activity, duration) {
+    const cfg = getConfig();
+    if (!cfg) return '';
+    const e = cfg.entries || {};
+    const formBase = cfg.formBaseURL || '';
+    const params = new URLSearchParams();
+    const teamKey = normalizeEntryId(e.teamName || e.team || e.team_name);
+    const nameKey = normalizeEntryId(e.name || e.member);
+    const cwidKey = normalizeEntryId(e.cwid);
+    const activityKey = normalizeEntryId(e.activity);
+    const durationKey = normalizeEntryId(e.duration);
+    if (teamKey && cfg.teamName) params.append(teamKey, cfg.teamName);
+    if (nameKey) params.append(nameKey, name || '');
+    if (cwidKey) params.append(cwidKey, cwid || '');
+    if (activityKey) params.append(activityKey, activity || '');
+    if (durationKey) params.append(durationKey, duration || '');
+    return params.toString() ? `${formBase}?${params.toString()}` : formBase;
+  }
+
+  // UI wiring
+  document.addEventListener('DOMContentLoaded', () => {
+    const cfg = getConfig();
+    const memberSelect = document.getElementById('member');
+    const activitySelect = document.getElementById('activity');
+    const durationButtons = document.querySelector('.duration-buttons');
+    const manualInput = document.getElementById('manualDuration');
+    const slider = document.getElementById('durationSlider');
+    const actionBtn = document.getElementById('copyBtn');
+
+    if (!memberSelect || !activitySelect || !actionBtn) return;
+
+    // populate members and activities from config if present
+    if (cfg && cfg.teamMembers) {
+      memberSelect.innerHTML = '<option value="">-- Choose a member --</option>';
+      Object.entries(cfg.teamMembers).forEach(([n, id]) => {
+        const opt = document.createElement('option');
+        opt.value = `${n}|${id}`;
+        opt.textContent = n;
+        memberSelect.appendChild(opt);
+      });
+    }
+
+    if (cfg && Array.isArray(cfg.activities)) {
+      activitySelect.innerHTML = '<option value="">-- Choose an activity --</option>';
+      cfg.activities.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a; opt.textContent = a; activitySelect.appendChild(opt);
+      });
+    }
+
+    // build duration buttons from DOM or config
+    if (durationButtons && cfg && Array.isArray(cfg.durations)) {
+      durationButtons.innerHTML = '';
+      cfg.durations.forEach(d => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'duration-btn';
+        btn.dataset.duration = String(d);
+        btn.textContent = `${d} min`;
+        durationButtons.appendChild(btn);
+      });
+    }
+
+    // shared duration state
+    let selectedDuration = '';
+
+    // delegate duration button clicks
+    if (durationButtons) {
+      durationButtons.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('.duration-btn');
+        if (!btn) return;
+        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedDuration = String(btn.dataset.duration || btn.textContent.replace(/[^0-9]/g, ''));
+        if (manualInput) manualInput.value = selectedDuration;
+        if (slider) slider.value = selectedDuration;
+      });
+    }
+
+    // manual input
+    if (manualInput) {
+      manualInput.addEventListener('input', (e) => {
+        const v = e.target.value && Number(e.target.value) > 0 ? String(Number(e.target.value)) : '';
+        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+        selectedDuration = v;
+        if (slider && v) slider.value = v;
+      });
+    }
+
+    // slider
+    if (slider) {
+      slider.addEventListener('input', (e) => {
+        selectedDuration = String(e.target.value);
+        if (manualInput) manualInput.value = selectedDuration;
+        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+      });
+      // init
+      selectedDuration = String(slider.value || '');
+      if (manualInput) manualInput.value = selectedDuration;
+    }
+
+    // action button: validate minimal fields, build url, copy & open
+    actionBtn.addEventListener('click', () => {
+      const memberVal = memberSelect.value || '';
+      const activityVal = activitySelect.value || '';
+      const durationVal = selectedDuration || '';
+      if (!memberVal) { alert('Please select a member'); return; }
+      if (!activityVal) { alert('Please select an activity'); return; }
+      if (!durationVal) { alert('Please select a duration'); return; }
+
+      const [name, cwid] = memberVal.split('|');
+      const url = buildURLFromConfig(name, cwid, activityVal, durationVal);
+      if (!url) { alert('Form not configured. Please set FORM_CONFIG in index.html'); return; }
+
+      // copy to clipboard (best-effort) then open
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).catch(() => {});
+      }
+      window.open(url, '_blank');
+    });
+  });
+})();
 // External app script: populate members, build prefilled Google Form URL,
 // save recent logs to localStorage, render recent logs and a simple leaderboard.
 
