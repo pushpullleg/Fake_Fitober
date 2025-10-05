@@ -28,208 +28,170 @@
     return id.startsWith('entry.') ? id : 'entry.' + id;
   }
 
-  function buildPrefillURL(name, cwid, activity, duration) {
-    const e = FALLBACK.entries;
-    const params = new URLSearchParams();
-    const teamKey = normalizeEntry(e.teamName);
-    // Minimal standalone prefill script for Fake_Fitober
-    // Builds a Google Form prefill URL from sensible fallbacks and opens it.
+  // Clean minimal app script - single IIFE
+  (function () {
+    'use strict';
 
-    (function () {
-      'use strict';
+    const FALLBACK = {
+      formBaseURL: 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform',
+      entries: {
+        teamName: 'entry.500000070',
+        name: 'entry.721958901',
+        cwid: 'entry.1522950107',
+        activity: 'entry.1322466239',
+        duration: 'entry.737958173'
+      },
+      teamName: 'The Excel-erators'
+    };
 
-      const FALLBACK = {
-        formBaseURL: 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform',
-        entries: {
-          teamName: 'entry.500000070',
-          name: 'entry.721958901',
-          cwid: 'entry.1522950107',
-          activity: 'entry.1322466239',
-          duration: 'entry.737958173'
-        },
-        teamName: 'The Excel-erators'
-      };
+    function normalizeEntry(id) {
+      if (!id) return null;
+      id = String(id).trim();
+      if (!id) return null;
+      return id.startsWith('entry.') ? id : 'entry.' + id;
+    }
 
-      function normalizeEntry(id) {
-        if (!id) return null;
-        id = String(id).trim();
-        if (!id) return null;
-        return id.startsWith('entry.') ? id : 'entry.' + id;
-      }
+    function buildPrefillURL(name, cwid, activity, duration) {
+      const e = FALLBACK.entries;
+      const params = new URLSearchParams();
+      const teamKey = normalizeEntry(e.teamName);
+      const nameKey = normalizeEntry(e.name);
+      const cwidKey = normalizeEntry(e.cwid);
+      const activityKey = normalizeEntry(e.activity);
+      const durationKey = normalizeEntry(e.duration);
+      if (teamKey) params.append(teamKey, FALLBACK.teamName);
+      if (nameKey) params.append(nameKey, name || '');
+      if (cwidKey) params.append(cwidKey, cwid || '');
+      if (activityKey) params.append(activityKey, activity || '');
+      if (durationKey) params.append(durationKey, duration || '');
+      return params.toString() ? `${FALLBACK.formBaseURL}?${params.toString()}` : FALLBACK.formBaseURL;
+    }
 
-      function buildPrefillURL(name, cwid, activity, duration) {
-        const e = FALLBACK.entries;
-        const params = new URLSearchParams();
-        const teamKey = normalizeEntry(e.teamName);
-        // Clean minimal script (single IIFE)
-        (function () {
-          'use strict';
+    function showToast(text, timeout = 1800) {
+      // Clean minimal app script for Fake_Fitober
+      // Single IIFE, builds a Google Form prefill URL and opens it.
 
-          const FALLBACK = {
-            formBaseURL: 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform',
-            entries: {
-              teamName: 'entry.500000070',
-              name: 'entry.721958901',
-              cwid: 'entry.1522950107',
-              activity: 'entry.1322466239',
-              duration: 'entry.737958173'
-            },
-            teamName: 'The Excel-erators'
-          };
+      (function () {
+        'use strict';
 
-          function normalizeEntry(id) {
-            if (!id) return null;
-            id = String(id).trim();
-            if (!id) return null;
-            return id.startsWith('entry.') ? id : 'entry.' + id;
-          }
+        const FALLBACK = {
+          formBaseURL: 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform',
+          entries: {
+            teamName: 'entry.500000070',
+            name: 'entry.721958901',
+            cwid: 'entry.1522950107',
+            activity: 'entry.1322466239',
+            duration: 'entry.737958173'
+          },
+          teamName: 'The Excel-erators'
+        };
 
-          function buildPrefillURL(name, cwid, activity, duration) {
-            const e = FALLBACK.entries;
-            const params = new URLSearchParams();
-            const teamKey = normalizeEntry(e.teamName);
-            const nameKey = normalizeEntry(e.name);
-            const cwidKey = normalizeEntry(e.cwid);
-            const activityKey = normalizeEntry(e.activity);
-            const durationKey = normalizeEntry(e.duration);
-            if (teamKey) params.append(teamKey, FALLBACK.teamName);
-            if (nameKey) params.append(nameKey, name || '');
-            if (cwidKey) params.append(cwidKey, cwid || '');
-            if (activityKey) params.append(activityKey, activity || '');
-            if (durationKey) params.append(durationKey, duration || '');
-            return params.toString() ? `${FALLBACK.formBaseURL}?${params.toString()}` : FALLBACK.formBaseURL;
-          }
+        function normalizeEntry(id) {
+          if (!id) return null;
+          id = String(id).trim();
+          if (!id) return null;
+          return id.startsWith('entry.') ? id : 'entry.' + id;
+        }
 
-          document.addEventListener('DOMContentLoaded', () => {
-            const memberSelect = document.getElementById('member');
-            const activitySelect = document.getElementById('activity');
-            const durationButtons = document.querySelector('.duration-buttons');
-            const manualInput = document.getElementById('manualDuration');
-            const slider = document.getElementById('durationSlider');
-            const actionBtn = document.getElementById('copyBtn');
-            if (!memberSelect || !activitySelect || !actionBtn) return;
+        function buildPrefillURL(name, cwid, activity, duration) {
+          const e = FALLBACK.entries;
+          const params = new URLSearchParams();
+          const teamKey = normalizeEntry(e.teamName);
+          const nameKey = normalizeEntry(e.name);
+          const cwidKey = normalizeEntry(e.cwid);
+          const activityKey = normalizeEntry(e.activity);
+          const durationKey = normalizeEntry(e.duration);
+          if (teamKey) params.append(teamKey, FALLBACK.teamName);
+          if (nameKey) params.append(nameKey, name || '');
+          if (cwidKey) params.append(cwidKey, cwid || '');
+          if (activityKey) params.append(activityKey, activity || '');
+          if (durationKey) params.append(durationKey, duration || '');
+          return params.toString() ? `${FALLBACK.formBaseURL}?${params.toString()}` : FALLBACK.formBaseURL;
+        }
 
-            let selectedDuration = slider ? String(slider.value || '') : '';
-            if (manualInput && selectedDuration) manualInput.value = selectedDuration;
+        function showToast(text, timeout = 1600) {
+          const t = document.getElementById('toast');
+          if (!t) return;
+          t.textContent = text;
+          t.style.display = '';
+          requestAnimationFrame(() => t.classList.add('show'));
+          clearTimeout(t._hideTimer);
+          t._hideTimer = setTimeout(() => {
+            t.classList.remove('show');
+            setTimeout(() => t.style.display = 'none', 200);
+          }, timeout);
+        }
 
-            if (durationButtons) {
-              durationButtons.addEventListener('click', (ev) => {
-                const btn = ev.target.closest('.duration-btn');
-                if (!btn) return;
-                document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedDuration = String(btn.dataset.duration || btn.textContent.replace(/[^0-9]/g, ''));
-                if (manualInput) manualInput.value = selectedDuration;
-                if (slider) slider.value = selectedDuration;
-              });
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+          const memberSelect = document.getElementById('member');
+          const activitySelect = document.getElementById('activity');
+          const durationButtons = document.querySelector('.duration-buttons');
+          const manualInput = document.getElementById('manualDuration');
+          const slider = document.getElementById('durationSlider');
+          const actionBtn = document.getElementById('copyBtn');
+          if (!memberSelect || !activitySelect || !actionBtn) return;
 
-            if (manualInput) {
-              manualInput.addEventListener('input', (e) => {
-                const v = e.target.value && Number(e.target.value) > 0 ? String(Number(e.target.value)) : '';
-                document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
-                selectedDuration = v;
-                if (slider && v) slider.value = v;
-              });
-            }
+          let selectedDuration = slider ? String(slider.value || '') : '';
+          if (manualInput && selectedDuration) manualInput.value = selectedDuration;
 
-            if (slider) {
-              slider.addEventListener('input', (e) => {
-                selectedDuration = String(e.target.value);
-                if (manualInput) manualInput.value = selectedDuration;
-                document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
-              });
-            }
-
-            actionBtn.addEventListener('click', () => {
-              const memberVal = memberSelect.value || '';
-              const activityVal = activitySelect.value || '';
-              const durationVal = selectedDuration || '';
-              if (!memberVal) { alert('Please select a member'); return; }
-              if (!activityVal) { alert('Please select an activity'); return; }
-              if (!durationVal) { alert('Please select a duration'); return; }
-              const [name, cwid] = memberVal.split('|');
-              const url = buildPrefillURL(name, cwid, activityVal, durationVal);
-              try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(()=>{}); } catch (e) {}
-              window.open(url, '_blank');
+          if (durationButtons) {
+            durationButtons.addEventListener('click', (ev) => {
+              const btn = ev.target.closest('.duration-btn');
+              if (!btn) return;
+              document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+              btn.classList.add('selected');
+              selectedDuration = String(btn.dataset.duration || btn.textContent.replace(/[^0-9]/g, ''));
+              if (manualInput) manualInput.value = selectedDuration;
+              if (slider) slider.value = selectedDuration;
             });
+          }
+
+          if (manualInput) {
+            manualInput.addEventListener('input', (e) => {
+              const v = e.target.value && Number(e.target.value) > 0 ? String(Number(e.target.value)) : '';
+              document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+              selectedDuration = v;
+              if (slider && v) slider.value = v;
+            });
+          }
+
+          if (slider) {
+            slider.addEventListener('input', (e) => {
+              selectedDuration = String(e.target.value);
+              if (manualInput) manualInput.value = selectedDuration;
+              document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+            });
+          }
+
+          actionBtn.addEventListener('click', () => {
+            const memberVal = memberSelect.value || '';
+            const activityVal = activitySelect.value || '';
+            const durationVal = selectedDuration || '';
+
+            const memberError = document.getElementById('memberError');
+            const activityError = document.getElementById('activityError');
+            const durationError = document.getElementById('durationError');
+            if (memberError) memberError.style.display = memberVal ? 'none' : '';
+            if (activityError) activityError.style.display = activityVal ? 'none' : '';
+            if (durationError) durationError.style.display = durationVal ? 'none' : '';
+
+            if (!memberVal || !activityVal || !durationVal) {
+              if (!memberVal && memberError) memberError.style.display = '';
+              if (!activityVal && activityError) activityError.style.display = '';
+              if (!durationVal && durationError) durationError.style.display = '';
+              showToast('Please fill required fields');
+              return;
+            }
+
+            const [name, cwid] = memberVal.split('|');
+            const url = buildPrefillURL(name || '', cwid || '', activityVal, durationVal);
+            try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(()=>{}); } catch (e) {}
+            window.open(url, '_blank');
+            showToast('Opening prefilled form...');
           });
+        });
 
-        })();
-                  document.addEventListener('DOMContentLoaded', () => {
-                    const memberSelect = document.getElementById('member');
-                    const activitySelect = document.getElementById('activity');
-                    const durationButtons = document.querySelector('.duration-buttons');
-                    const manualInput = document.getElementById('manualDuration');
-                    const slider = document.getElementById('durationSlider');
-                    const actionBtn = document.getElementById('copyBtn');
-                    if (!memberSelect || !activitySelect || !actionBtn) return;
-
-                    let selectedDuration = slider ? String(slider.value || '') : '';
-                    if (manualInput && selectedDuration) manualInput.value = selectedDuration;
-
-                    if (durationButtons) {
-                      durationButtons.addEventListener('click', (ev) => {
-                        const btn = ev.target.closest('.duration-btn');
-                        if (!btn) return;
-                        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        selectedDuration = String(btn.dataset.duration || btn.textContent.replace(/[^0-9]/g, ''));
-                        if (manualInput) manualInput.value = selectedDuration;
-                        if (slider) slider.value = selectedDuration;
-                      });
-                    }
-
-                    if (manualInput) {
-                      manualInput.addEventListener('input', (e) => {
-                        const v = e.target.value && Number(e.target.value) > 0 ? String(Number(e.target.value)) : '';
-                        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
-                        selectedDuration = v;
-                        // Minimal standalone prefill script (clean)
-                        (function () {
-                          'use strict';
-
-                          const FALLBACK = {
-                            formBaseURL: 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform',
-                            entries: {
-                              teamName: 'entry.500000070',
-                              name: 'entry.721958901',
-                              cwid: 'entry.1522950107',
-                              activity: 'entry.1322466239',
-                              duration: 'entry.737958173'
-                            },
-                            teamName: 'The Excel-erators'
-                          };
-
-                          function normalizeEntry(id) {
-                            if (!id) return null;
-                            id = String(id).trim();
-                            if (!id) return null;
-                            return id.startsWith('entry.') ? id : 'entry.' + id;
-                          }
-
-                          function buildPrefillURL(name, cwid, activity, duration) {
-                            const e = FALLBACK.entries;
-                            const params = new URLSearchParams();
-                            const teamKey = normalizeEntry(e.teamName);
-                            const nameKey = normalizeEntry(e.name);
-                            const cwidKey = normalizeEntry(e.cwid);
-                            const activityKey = normalizeEntry(e.activity);
-                            const durationKey = normalizeEntry(e.duration);
-                            if (teamKey) params.append(teamKey, FALLBACK.teamName);
-                            if (nameKey) params.append(nameKey, name || '');
-                            if (cwidKey) params.append(cwidKey, cwid || '');
-                            if (activityKey) params.append(activityKey, activity || '');
-                            if (durationKey) params.append(durationKey, duration || '');
-                            return params.toString() ? `${FALLBACK.formBaseURL}?${params.toString()}` : FALLBACK.formBaseURL;
-                          }
-
-                          document.addEventListener('DOMContentLoaded', () => {
-                            const memberSelect = document.getElementById('member');
-                            const activitySelect = document.getElementById('activity');
-                            const durationButtons = document.querySelector('.duration-buttons');
-                            const manualInput = document.getElementById('manualDuration');
-                            const slider = document.getElementById('durationSlider');
+      })();
                             const actionBtn = document.getElementById('copyBtn');
                             if (!memberSelect || !activitySelect || !actionBtn) return;
 
