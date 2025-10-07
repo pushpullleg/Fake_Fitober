@@ -1,53 +1,41 @@
-// Minimal client script: build a Google Form prefill URL from FORM_CONFIG
-// and open it. No webhooks, no logging — intentionally tiny for GitHub Pages.
-
-(function () {
-  'use strict';
-// Minimal standalone prefill script for Fake_Fitober
-// Builds a Google Form prefill URL from sensible fallbacks and opens it.
-
+// Simple prefill script - builds Google Form URL and opens it
 (function () {
   'use strict';
 
-  const FALLBACK = {
-    formBaseURL: 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform',
-    entries: {
-      teamName: 'entry.500000070',
-      name: 'entry.721958901',
-      cwid: 'entry.1522950107',
-      activity: 'entry.1322466239',
-      duration: 'entry.737958173'
-    },
-    teamName: 'The Excel-erators'
+  // Form configuration
+  const FORM_BASE_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform';
+  const TEAM_NAME = 'The Excel-erators';
+  
+  // Entry IDs from the Google Form
+  const ENTRIES = {
+    teamName: 'entry.500000070',
+    memberName: 'entry.721958901', 
+    cwid: 'entry.1522950107',
+    activity: 'entry.1322466239',
+    duration: 'entry.737958173'
   };
 
-  function normalizeEntry(id) {
-    if (!id) return null;
-    id = String(id).trim();
-    if (!id) return null;
-    return id.startsWith('entry.') ? id : 'entry.' + id;
+  // Build prefill URL
+  function buildPrefillURL(memberName, cwid, activity, duration) {
+    const params = new URLSearchParams();
+    params.append(ENTRIES.teamName, TEAM_NAME);
+    params.append(ENTRIES.memberName, memberName || '');
+    params.append(ENTRIES.cwid, cwid || '');
+    params.append(ENTRIES.activity, activity || '');
+    params.append(ENTRIES.duration, duration || '');
+    
+    return `${FORM_BASE_URL}?${params.toString()}`;
   }
 
-  // Clean minimal app script - single IIFE
-  (function () {
-    'use strict';
-
-    const FALLBACK = {
-      formBaseURL: 'https://docs.google.com/forms/d/e/1FAIpQLSfhLBkLnU8xGQouW4lr_ALblEuij9aCkgYad5F87T06XBJUvg/viewform',
-      entries: {
-        teamName: 'entry.500000070',
-        name: 'entry.721958901',
-        cwid: 'entry.1522950107',
-        activity: 'entry.1322466239',
-        duration: 'entry.737958173'
-      },
-      teamName: 'The Excel-erators'
-    };
-
-    function normalizeEntry(id) {
-      if (!id) return null;
-      id = String(id).trim();
-      if (!id) return null;
+  // Show toast message
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
       return id.startsWith('entry.') ? id : 'entry.' + id;
     }
 
